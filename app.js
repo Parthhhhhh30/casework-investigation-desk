@@ -1,4 +1,5 @@
 import {seeds,fresh,diagnostic,validateEscalation,canClose,checkResponse,baseline,evaluateBaseline,nowIso,MODEL_VERSION} from './rules.mjs';
+import {summarizeActualModelRuns} from './ai-evaluation.mjs';
 const $=x=>document.getElementById(x), esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const when=s=>new Date(s).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
 let db=null,state=fresh(),chosen='CW-204',tab='investigate',feedback='',aiEnabled=false;
@@ -41,7 +42,7 @@ function knowledge(c){
  return heading('04 / KNOWLEDGE','A resolution is useful twice when it is documented.','Only approved simulation articles are suggested. No official vendor guidance or client data is implied.')
  +card('<h3>Approved relevant articles</h3>'+(matching.length?matching.map(a=>'<div class="kb-item"><small>'+esc(a.id)+' / '+esc(a.from)+'</small><h4>'+esc(a.title)+'</h4><ol>'+a.steps.map(s=>'<li>'+esc(s)+'</li>').join('')+'</ol></div>').join(''):'<p>No approved article for this case type yet.</p>'))
  +card('<h3>Write a reusable resolution</h3><p>Publishing requires a verified technical resolution, supporting notes and a reviewed customer response.</p>'+field('article-name','Article title','',false)+field('article-steps','Steps, one per line','')+button('publish','Publish locally approved article'))
- +card('<h3>Routing evaluation</h3><p>Run 8 deterministic test cases. These do not test an LLM.</p>'+button('eval','Run evaluation','secondary')+'<div id="eval-output"></div>');
+ +card('<h3>Routing evaluation</h3><p>Run 8 deterministic test cases. These do not test an LLM.</p>'+button('eval','Run evaluation','secondary')+'<div id="eval-output"></div><div id="model-eval-output"></div>'+button('eval-ai','Audit recorded live model responses','secondary'));
 }
 function activity(c){
  const gate=canClose(c);
@@ -131,6 +132,13 @@ async function action(key){
   if(title.length<12||steps.length<3||steps.some(x=>x.length<12)){notice('Add a clear title and at least three actionable steps.');return}
   const id='KB-'+String(state.articles.length+1).padStart(3,'0');state.articles.push({id,title,steps,kind:c.kind,approved:true,from:c.id+' verified fictional case',scope:'Independent simulation only.'});
   await change(c,'Knowledge article published',id+' / '+title);return;
+ }
+ if(key==='eval-ai'){
+  const result=summarizeActualModelRuns(state.aiRuns);
+  $('model-eval-output').innerHTML=result.evaluated
+   ? '<div class="notice"><b>'+result.passed+'/'+result.evaluated+' recorded Gemini responses passed heuristic screens.</b><br>'+result.cases.map(x=>esc(x.id)+' / '+x.checks.map(c=>(c.pass?'PASS':'FLAG')+': '+esc(c.criterion)).join(' · ')).join('<br>')+'<br>'+esc(result.meaning)+'</div>'
+   : '<div class="notice">No real model outputs have been recorded in this local casebook. This audit makes no model calls and does not present simulated results as an evaluation.</div>';
+  return;
  }
  if(key==='eval'){
   const results=evaluateBaseline(),pass=results.filter(x=>x.pass).length;

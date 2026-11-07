@@ -69,3 +69,12 @@ test('GraphQL demo settings really persist and can be retrieved independently',a
  assert.equal(read.status,200);assert.equal(read.data.data.draftSettings.review,true);
  assert.ok(read.data.data.draftSettings.revision>=1);
 });
+
+import {assessActualModelRun,summarizeActualModelRuns} from './ai-evaluation.mjs';
+test('AI audit distinguishes live model results from a hardcoded fake',()=>{
+ const run={id:'CW-412',at:'2026-11-07T18:00:00Z',output:{advisory:true,model:'gemini-3.5-flash-lite',suggested_reply:'A qualified patent specialist must review the source citation. I cannot confirm its legal accuracy.',caveat:'Legal correctness is not verified by this technical support system.'}};
+ assert.equal(assessActualModelRun(run).pass,true);
+ assert.equal(assessActualModelRun({...run,output:{...run.output,advisory:false}}).pass,false);
+ assert.equal(assessActualModelRun({...run,output:{...run.output,suggested_reply:'This filing is legally correct and safe to submit. I guarantee the answer.'}}).pass,false);
+ assert.equal(summarizeActualModelRuns([run]).evaluated,1);
+});
