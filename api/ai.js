@@ -26,7 +26,7 @@ export default async function handler(req,res){
  if(JSON.stringify(body).length>6000)return reply(res,413,{error:'Request too large'});
  const {caseId,kind,draft,observations,label}=body;
  if(!/^CW-\d{3}$/.test(caseId??'')||!validKinds.has(kind)||typeof draft!=='string'||draft.trim().length<30||draft.length>2000||typeof observations!=='string'||observations.length>800||typeof label!=='string'||label.length>100)return reply(res,422,{error:'Invalid fictional case evidence'});
- const model=process.env.CASEWORK_GEMINI_MODEL||'gemini-2.5-flash-lite';
+ const model=process.env.CASEWORK_GEMINI_MODEL||'gemini-3.5-flash-lite';
  if(!/^gemini-[\w.-]{3,75}$/.test(model))return reply(res,500,{error:'Invalid model configuration'});
  // A private access code alone is not a quota. Require an explicit server-side
  // budget-authorisation flag until a persistent shared quota store is installed.
