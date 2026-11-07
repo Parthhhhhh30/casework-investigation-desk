@@ -10,4 +10,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - run: node --check app.js
+      - run: node --check api/ai.js
+      - run: node --check api/graphql.js
+      - run: node --check api/lab.js
       - run: npm test
