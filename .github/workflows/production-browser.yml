@@ -1,14 +1,6 @@
 name: CASEWORK production browser acceptance
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'app.js'
-      - 'rules.mjs'
-      - 'api/graphql.js'
-      - 'ai-evaluation.mjs'
-      - 'browser-smoke.mjs'
-      - '.github/workflows/production-browser.yml'
 jobs:
   verify-production:
     runs-on: ubuntu-latest
