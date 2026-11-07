@@ -33,6 +33,13 @@ GitHub Actions runs JavaScript syntax checks, deterministic/API tests and real C
 
 To enable the **optional real provider** in a privately controlled deployment, create a separate PostgreSQL database, apply `schema.sql`, and configure the server-only values described in `.env.example`. Set `CASEWORK_ALLOW_MODEL_CALLS=true` only with the database, a strong `CASEWORK_SESSION_SECRET`, and a valid `GEMINI_API_KEY`. The live-provider acceptance workflow can be triggered separately and uses fictional text only.
 
+## Current release: evidence and limitations
+- Customer-response approval now checks the fictional case context, rejects a wider set of unverified assurances, and is invalidated when the diagnostic evidence changes. This is a guardrail, **not** a guarantee of correct support writing.
+- A routine account-access issue cannot be routed to Security without a recorded security indicator; legal and suspected exposure cases retain specialist routing.
+- The GraphQL investigation now writes to an isolated fictional database record and independently reads back the saved revision before reporting a passing result. The live deployment requires the `demo_draft_settings` table in its configured database; if unavailable, the diagnostic fails rather than claiming success. Production uses server-side signed sessions; local development uses an isolated in-process test store.
+- The knowledge panel can screen **recorded real model responses** against case-specific safety rules. Results explicitly distinguish this from the eight deterministic routing cases. These heuristic checks do not establish the model's overall reliability, and no live AI calls are made by the audit.
+- Browser casebooks remain local to the visitor; only fictional GraphQL settings and separate AI usage counters are persisted server-side.
+
 ## Boundaries
 This is **not** a connected vendor service, a real customer incident system, patent-law advice, or a shared authenticated ticket database. Browser casebooks are isolated and user-editable; the Neon database only stores model-use counters. Gemini supplies communication suggestions, never evidence, legal certification or autonomous case actions. All measurements and examples are demonstration results; no commercial deployment or customer outcomes are claimed.
 
