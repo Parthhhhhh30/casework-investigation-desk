@@ -26,3 +26,14 @@ BEGIN
  ON CONFLICT(day_utc,workspace) DO UPDATE SET count=ai_usage.count+1;
  RETURN true;
 END $$;
+
+-- Persistent but fictional GraphQL draft settings, isolated by signed workspace.
+-- All values are synthetic; no production customer data is written.
+CREATE TABLE IF NOT EXISTS demo_draft_settings (
+ workspace_hash text NOT NULL CHECK (length(workspace_hash)=64),
+ draft_id text NOT NULL CHECK (length(draft_id)<=64),
+ review boolean NOT NULL DEFAULT false,
+ revision integer NOT NULL DEFAULT 0 CHECK (revision>=0),
+ updated_at timestamptz NOT NULL DEFAULT now(),
+ PRIMARY KEY (workspace_hash,draft_id)
+);
