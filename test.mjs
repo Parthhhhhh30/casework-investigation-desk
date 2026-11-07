@@ -26,3 +26,18 @@ test('model endpoint fails closed without configured access',async()=>{const r=a
 
 test('GraphQL rejects malformed JSON without throwing',async()=>{const r=await invoke(graphql,'POST','{invalid');assert.equal(r.status,400);assert.ok(r.data.errors)});
 test('GraphQL rejects oversized requests',async()=>{const r=await invoke(graphql,'POST',{operationName:'UpdateDraftSettings',variables:{padding:'x'.repeat(5000)}});assert.equal(r.status,413)});
+
+test('private AI access rejects missing code without provider call',async()=>{
+ const before={flag:process.env.CASEWORK_ALLOW_MODEL_CALLS,key:process.env.GEMINI_API_KEY,code:process.env.CASEWORK_AI_ACCESS_CODE};
+ process.env.CASEWORK_ALLOW_MODEL_CALLS='true';process.env.GEMINI_API_KEY='test-placeholder-not-a-real-key';process.env.CASEWORK_AI_ACCESS_CODE='a-secure-test-access-code-123456789';
+ try{
+  const r=await invoke(ai,'POST',{caseId:'CW-101',kind:'login',draft:'A sufficiently long fictional support message.'});
+  assert.equal(r.status,403);
+  assert.equal('suggested_reply' in r.data,false);
+ }finally{
+  for(const [key,val] of Object.entries({CASEWORK_ALLOW_MODEL_CALLS:before.flag,GEMINI_API_KEY:before.key,CASEWORK_AI_ACCESS_CODE:before.code})){
+   if(val===undefined)delete process.env[key];else process.env[key]=val;
+  }
+ }
+});
+test('fictional GraphQL invalid variables are rejected',async()=>{const r=await invoke(graphql,'POST',{operationName:'UpdateDraftSettings',variables:[]});assert.equal(r.status,400)});
