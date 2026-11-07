@@ -97,11 +97,11 @@ async function action(key){
  if(key==='fix'){
   if(c.kind==='legal'||c.fault.security){notice('This issue requires qualified specialist review.');return}
   if(c.kind==='login')c.fault.expired=false;if(c.kind==='graphql')c.fault.missingId=false;if(c.kind==='documents')c.fault.stale=false;
-  c.verified=false;c.state='Fix pending verification';await change(c,'Controlled configuration changed','Rerun the diagnostic; a configuration change alone is not proof of resolution.');return;
+  c.verified=false;c.verificationRequiredAfter=nowIso();c.state='Fix pending verification';await change(c,'Controlled configuration changed','Rerun the diagnostic; a configuration change alone is not proof of resolution.');return;
  }
- if(key==='security'){c.fault.security=true;c.verified=false;c.state='Investigating';await change(c,'Possible information exposure simulated','Stop routine changes and route to Security.');return}
+ if(key==='security'){c.fault.security=true;c.verified=false;c.verificationRequiredAfter=nowIso();c.state='Investigating';await change(c,'Possible information exposure simulated','Stop routine changes and route to Security.');return}
  if(key==='verify'){
-  if(!c.diagnostics.at(-1)?.pass||c.kind==='legal'||c.fault.security){notice('No verified safe technical outcome is available.');return}
+  if(!c.diagnostics.at(-1)?.pass||(c.verificationRequiredAfter&&Date.parse(c.diagnostics.at(-1).at)<Date.parse(c.verificationRequiredAfter))||c.kind==='legal'||c.fault.security){notice('No verified safe technical outcome is available.');return}
   c.verified=true;c.state='Fix pending verification';await change(c,'Successful retest recorded','Latest diagnostic passed with current configuration.');return;
  }
  if(key==='approve'){
@@ -118,7 +118,7 @@ async function action(key){
   const g=canClose(c);if(!g.ok){notice(g.problems.join(' '));return}
   c.state='Resolved';await change(c,'Case closed with verification','Passing test, investigation notes and human-approved update recorded.');return;
  }
- if(key==='reopen'){c.state='Investigating';c.verified=false;await change(c,'Case reopened','Prior resolution cannot be assumed; re-test required.');return}
+ if(key==='reopen'){c.state='Investigating';c.verified=false;c.verificationRequiredAfter=nowIso();await change(c,'Case reopened','Prior resolution cannot be assumed; re-test required.');return}
  if(key==='publish'){
   const g=canClose(c),title=$('article-name').value.trim(),steps=$('article-steps').value.split('\n').map(x=>x.trim()).filter(Boolean);
   if(!g.ok){notice('Article blocked: '+g.problems.join(' '));return}
