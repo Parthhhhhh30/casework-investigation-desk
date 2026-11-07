@@ -75,11 +75,17 @@ async function action(key){
         const response=await fetch('/api/graphql',{method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({operationName:'UpdateDraftSettings',variables})});
         const payload=await response.json();
         if(!response.ok||!payload.simulation)throw Error('Fictional GraphQL service unavailable.');
-        const passed=Boolean(payload.data?.updateDraftSettings?.success)&&!payload.errors?.length;
+        let passed=Boolean(payload.data?.updateDraftSettings?.success)&&!payload.errors?.length;
+        let readBack=null;
+        if(passed){
+          const reread=await fetch('/api/graphql',{method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({operationName:'ReadDraftSettings',variables:{draftId:'demo_42'}})});
+          readBack=await reread.json();
+          if(!reread.ok || !readBack.data?.draftSettings?.persisted || readBack.data.draftSettings.review!==true || readBack.data.draftSettings.revision<1)passed=false;
+        }
         d={pass:passed,category:'Client/API',label:passed?'MUTATION_OK':'GRAPHQL_VALIDATION_ERROR',
         lines:['POST /api/graphql → HTTP '+response.status,'operation: UpdateDraftSettings','variables: '+JSON.stringify(variables),
-        passed?'response.data.updateDraftSettings.success: true':'response.errors: '+JSON.stringify(payload.errors||[])],
-        guidance:passed?'Fictional GraphQL mutation accepted and returned the updated value.':'HTTP 200 did not mean mutation success. Investigate the returned GraphQL errors.',
+        passed?'response.data.updateDraftSettings.success: true; independent read-back revision='+readBack?.data?.draftSettings?.revision:'response.errors or read-back mismatch: '+JSON.stringify(payload.errors||readBack?.errors||[])],
+        guidance:passed?'Fictional GraphQL update persisted to an isolated server-side record and was read back successfully.':'HTTP 200 did not mean mutation success. Investigate the returned GraphQL errors.',
         simulation:true,executedOn:'casework-graphql-server'};
       }else{
         const response=await fetch('/api/lab',{method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:c.kind,fault:c.fault})});

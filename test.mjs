@@ -55,9 +55,17 @@ test('routine login is not automatically eligible for security escalation',()=>{
 test('reply approval must be tied to the latest diagnostic and exact text',()=>{
  const c=fresh().cases[0];c.fault.expired=false;c.diagnostics.push({...diagnostic(c),at:new Date().toISOString()});c.verified=true;
  c.note='An observed 401 was resolved after refreshing the fictional session.';
- c.reply='The fictional session was refreshed and access was retested successfully. Please try opening your workspace again.';
+ c.reply='The fictional session was refreshed and access was retested successfully. I will follow up if you have any further difficulty opening your workspace.';
  c.replyApproved=true;c.replyApprovedFor=c.reply;c.approvalDiagnosticAt=c.diagnostics.at(-1).at;
  assert.equal(canClose(c).ok,true);
  c.reply='I guarantee this will never happen again and your account is entirely safe.';
  assert.equal(canClose(c).ok,false);
+});
+
+test('GraphQL demo settings really persist and can be retrieved independently',async()=>{
+ const change=await invoke(graphql,'POST',{operationName:'UpdateDraftSettings',variables:{draftId:'demo_42',settings:{review:true}}});
+ assert.equal(change.status,200);assert.equal(change.data.data.updateDraftSettings.persisted,true);
+ const read=await invoke(graphql,'POST',{operationName:'ReadDraftSettings',variables:{draftId:'demo_42'}});
+ assert.equal(read.status,200);assert.equal(read.data.data.draftSettings.review,true);
+ assert.ok(read.data.data.draftSettings.revision>=1);
 });

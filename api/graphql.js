@@ -6,6 +6,7 @@ function session(req,res){
  const secret=process.env.CASEWORK_SESSION_SECRET||'';
  // Only accept persistent sessions backed by signed HttpOnly cookies in production.
  if(process.env.VERCEL && secret.length<32)throw Error('Session security unavailable');
+ if(!process.env.VERCEL && secret.length<32)return createHash('sha256').update('casework-local-demo').digest('hex');
  const raw=String(req.headers?.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('cw_graphql='))?.slice(11)||'';
  const parts=raw.split('.');
  let id='';
