@@ -16,6 +16,26 @@ try{
   const txt=await page.locator('#tab-panel').innerText();
   assert.match(txt,/SESSION_EXPIRED|GRAPHQL_VALIDATION_ERROR|STALE_SNAPSHOT|UNVERIFIED_REFERENCE/,'diagnostic evidence appears');
  }
+ // End-to-end controlled remediation: failed GraphQL response -> fix -> retest -> verify.
+ await page.locator('#case-list [data-case="CW-204"]').click();
+ await page.locator('[data-action="fix"]').click();
+ await page.locator('[data-action="diagnose"]').click();
+ await page.locator('#tab-panel').getByText('PASS',{exact:true}).waitFor();
+ await page.locator('[data-action="verify"]').click();
+ await page.locator('[data-tab="respond"]').click();
+ await page.locator('[data-action="approve"]').click();
+ await page.locator('[data-tab="investigate"]').click();
+ await page.locator('#note').fill('GraphQL HTTP 200 contained application error because the required draftId variable was absent; corrected it and reran the mutation successfully.');
+ await page.locator('[data-action="note"]').click();
+ await page.locator('[data-tab="history"]').click();
+ await page.getByText('Closure gate: READY').waitFor();
+ await page.locator('[data-action="close"]').click();
+ await page.locator('#case-status').getByText('Resolved').waitFor();
+ // Legal case must not be closed via the ordinary support workflow.
+ await page.locator('#case-list [data-case="CW-412"]').click();
+ await page.locator('[data-tab="history"]').click();
+ await page.locator('[data-action="close"]').click();
+ assert.notEqual(await page.locator('#case-status').innerText(),'Resolved');
  await page.reload();await page.locator('#desk').waitFor({state:'visible'});
  assert.equal(await page.locator('#case-list [data-case]').count(),4);
  assert.deepEqual(failures,[],'no uncaught JS errors');
