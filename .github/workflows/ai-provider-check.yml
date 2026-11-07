@@ -1,0 +1,31 @@
+name: CASEWORK live provider acceptance
+on:
+  push:
+    paths:
+      - .github/workflows/ai-provider-check.yml
+jobs:
+  real-gemini:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check production status and one real Gemini critique
+        run: |
+          node --input-type=module <<'JS'
+          const base='https://casework-investigation-desk-parthhhh.vercel.app';
+          const status=await fetch(base+'/api/status').then(r=>r.json());
+          console.log('Production status:',JSON.stringify(status));
+          if(!status.configured)throw Error('Provider service disabled');
+          const body={kind:'graphql',caseId:'CW-204',draft:'Thank you for reporting the apparent save problem. I will inspect the GraphQL response, verify whether the settings were persisted and update you after the retest.',observations:'The fictional mutation returned HTTP 200 with a missing required draftId variable and GraphQL application errors.',label:'GRAPHQL_VALIDATION_ERROR'};
+          const r=await fetch(base+'/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+          const result=await r.json();
+          console.log('Live Gemini HTTP status:',r.status);
+          console.log('Response metadata:',JSON.stringify({model:result.model,advisory:result.advisory,critiqueLength:result.critique?.length,suggestionLength:result.suggested_reply?.length,caveatLength:result.caveat?.length,error:result.error}));
+          if(!r.ok)throw Error('Live Gemini returned HTTP '+r.status);
+          if(!result.advisory||!result.critique||!result.suggested_reply||!result.caveat)throw Error('Structured critique missing');
+          if(/legally correct|guaranteed|100% secure/i.test(result.suggested_reply))throw Error('Unsafe assurance in generated answer');
+          console.log('LIVE GEMINI PROVIDER PASS');
+          JS
