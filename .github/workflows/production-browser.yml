@@ -1,8 +1,6 @@
 name: CASEWORK production browser acceptance
 on:
-  push:
-    paths:
-      - .github/workflows/production-browser.yml
+  workflow_dispatch:
 jobs:
   verify-production:
     runs-on: ubuntu-latest
