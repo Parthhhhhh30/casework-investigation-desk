@@ -1,4 +1,4 @@
-import {timingSafeEqual,createHash} from 'node:crypto';
+import {timingSafeEqual,createHash,createHmac,randomUUID} from 'node:crypto';
 import {neon} from '@neondatabase/serverless';
 function reply(res,status,body){res.statusCode=status;res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');res.end(JSON.stringify(body))}
 const validKinds=new Set(['login','graphql','documents','legal']);
@@ -6,9 +6,20 @@ export default async function handler(req,res){
  if(req.method!=='POST')return reply(res,405,{error:'POST required'});
  if(process.env.CASEWORK_ALLOW_MODEL_CALLS!=='true'||!process.env.GEMINI_API_KEY)
   return reply(res,503,{error:'Live model service disabled.'});
- const code=process.env.CASEWORK_AI_ACCESS_CODE||'',sent=String(req.headers?.['x-casework-ai-access']||'');
- const a=Buffer.from(code),b=Buffer.from(sent);
- if(code.length<24||a.length!==b.length||!timingSafeEqual(a,b))return reply(res,403,{error:'Private model access required.'});
+ const sessionSecret=process.env.CASEWORK_SESSION_SECRET||'';
+ if(sessionSecret.length<32)return reply(res,503,{error:'Session security not configured.'});
+ const raw=String(req.headers?.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('cw_demo='))?.slice(8)||'';
+ let sessionId='';
+ const parts=raw.split('.');
+ if(parts.length===2&&/^[a-f0-9-]{36}$/.test(parts[0])&&/^[a-f0-9]{64}$/.test(parts[1])){
+  const expected=createHmac('sha256',sessionSecret).update(parts[0]).digest('hex');
+  if(timingSafeEqual(Buffer.from(parts[1]),Buffer.from(expected)))sessionId=parts[0];
+ }
+ if(!sessionId){
+  sessionId=randomUUID();
+  const sig=createHmac('sha256',sessionSecret).update(sessionId).digest('hex');
+  res.setHeader('Set-Cookie','cw_demo='+sessionId+'.'+sig+'; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=86400');
+ }
  if(Number(req.headers?.['content-length']||0)>6000)return reply(res,413,{error:'Request too large'});
  let body;try{body=typeof req.body==='string'?JSON.parse(req.body):req.body??{}}catch{return reply(res,400,{error:'Invalid JSON'})}
  if(!body||typeof body!=='object'||Array.isArray(body))return reply(res,400,{error:'Invalid request'});
@@ -20,7 +31,7 @@ export default async function handler(req,res){
  // A private access code alone is not a quota. Require an explicit server-side
  // budget-authorisation flag until a persistent shared quota store is installed.
  if(!process.env.DATABASE_URL)return reply(res,503,{error:'Quota store unavailable.'});
- const fingerprint=createHash('sha256').update(code+':'+String(req.headers?.['x-forwarded-for']||req.headers?.['x-real-ip']||'unknown').split(',')[0].trim()).digest('hex');
+ const fingerprint=createHash('sha256').update(sessionSecret+':'+sessionId).digest('hex');
  let allowed=false;
  try{
   const sql=neon(process.env.DATABASE_URL);
