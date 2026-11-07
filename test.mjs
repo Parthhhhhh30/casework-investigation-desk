@@ -43,3 +43,21 @@ test('previous passing evidence cannot close a changed case',()=>{
  c.verificationRequiredAfter='2026-11-07T00:01:00.000Z';
  assert.equal(canClose(c).ok,false);
 });
+
+test('rejects broad false assurances absent from the previous keyword list',()=>{
+ assert.ok(checkResponse('Our investigation confirms this account is entirely safe and this issue will never happen again.').length>0);
+});
+test('routine login is not automatically eligible for security escalation',()=>{
+ const c=fresh().cases[0];c.note='A fictional sign-in session expired; no confidentiality evidence was found.';
+ c.diagnostics.push({...diagnostic(c),at:new Date().toISOString()});
+ assert.equal(validateEscalation(c,'Security','Routing a normal expired session to Security without any observed incident.').ok,false);
+});
+test('reply approval must be tied to the latest diagnostic and exact text',()=>{
+ const c=fresh().cases[0];c.fault.expired=false;c.diagnostics.push({...diagnostic(c),at:new Date().toISOString()});c.verified=true;
+ c.note='An observed 401 was resolved after refreshing the fictional session.';
+ c.reply='The fictional session was refreshed and access was retested successfully. Please try opening your workspace again.';
+ c.replyApproved=true;c.replyApprovedFor=c.reply;c.approvalDiagnosticAt=c.diagnostics.at(-1).at;
+ assert.equal(canClose(c).ok,true);
+ c.reply='I guarantee this will never happen again and your account is entirely safe.';
+ assert.equal(canClose(c).ok,false);
+});

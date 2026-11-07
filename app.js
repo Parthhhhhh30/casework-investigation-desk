@@ -89,7 +89,7 @@ async function action(key){
       }
     }finally{clearTimeout(timer)}
   }catch(e){notice('Live diagnostic failed: '+e.message+' No local result was substituted.');return;}
-  c.diagnostics.push({...d,at:nowIso()});c.verified=false;
+  c.diagnostics.push({...d,at:nowIso()});c.verified=false;c.replyApproved=false;
   if(c.state==='New')c.state='Investigating';
   await change(c,'Server diagnostic '+(d.pass?'passed':'failed'),d.lines.join(' | ').slice(0,600));
   return;
@@ -97,16 +97,16 @@ async function action(key){
  if(key==='fix'){
   if(c.kind==='legal'||c.fault.security){notice('This issue requires qualified specialist review.');return}
   if(c.kind==='login')c.fault.expired=false;if(c.kind==='graphql')c.fault.missingId=false;if(c.kind==='documents')c.fault.stale=false;
-  c.verified=false;c.verificationRequiredAfter=nowIso();c.state='Fix pending verification';await change(c,'Controlled configuration changed','Rerun the diagnostic; a configuration change alone is not proof of resolution.');return;
+  c.verified=false;c.replyApproved=false;c.verificationRequiredAfter=nowIso();c.state='Fix pending verification';await change(c,'Controlled configuration changed','Rerun the diagnostic; a configuration change alone is not proof of resolution.');return;
  }
- if(key==='security'){c.fault.security=true;c.verified=false;c.verificationRequiredAfter=nowIso();c.state='Investigating';await change(c,'Possible information exposure simulated','Stop routine changes and route to Security.');return}
+ if(key==='security'){c.fault.security=true;c.verified=false;c.replyApproved=false;c.verificationRequiredAfter=nowIso();c.state='Investigating';await change(c,'Possible information exposure simulated','Stop routine changes and route to Security.');return}
  if(key==='verify'){
   if(!c.diagnostics.at(-1)?.pass||(c.verificationRequiredAfter&&Date.parse(c.diagnostics.at(-1).at)<Date.parse(c.verificationRequiredAfter))||c.kind==='legal'||c.fault.security){notice('No verified safe technical outcome is available.');return}
   c.verified=true;c.state='Fix pending verification';await change(c,'Successful retest recorded','Latest diagnostic passed with current configuration.');return;
  }
  if(key==='approve'){
-  const v=$('reply').value.trim(),problems=checkResponse(v);if(problems.length){notice(problems.join(' '));return}
-  c.reply=v;c.replyApproved=true;await change(c,'Written customer update reviewed','Human-approved local draft; not transmitted.');return
+  const v=$('reply').value.trim(),problems=checkResponse(v,c);if(problems.length){notice(problems.join(' '));return}
+  c.reply=v;c.replyApproved=true;c.replyApprovedFor=v;c.approvalDiagnosticAt=c.diagnostics.at(-1)?.at;await change(c,'Written customer update reviewed','Human-approved local draft; not transmitted.');return
  }
  if(key==='route'){
   const target=$('target').value,reason=$('reason').value.trim(),v=validateEscalation(c,target,reason);
@@ -118,7 +118,7 @@ async function action(key){
   const g=canClose(c);if(!g.ok){notice(g.problems.join(' '));return}
   c.state='Resolved';await change(c,'Case closed with verification','Passing test, investigation notes and human-approved update recorded.');return;
  }
- if(key==='reopen'){c.state='Investigating';c.verified=false;c.verificationRequiredAfter=nowIso();await change(c,'Case reopened','Prior resolution cannot be assumed; re-test required.');return}
+ if(key==='reopen'){c.state='Investigating';c.verified=false;c.replyApproved=false;c.verificationRequiredAfter=nowIso();await change(c,'Case reopened','Prior resolution cannot be assumed; re-test required.');return}
  if(key==='publish'){
   const g=canClose(c),title=$('article-name').value.trim(),steps=$('article-steps').value.split('\n').map(x=>x.trim()).filter(Boolean);
   if(!g.ok){notice('Article blocked: '+g.problems.join(' '));return}
@@ -130,7 +130,7 @@ async function action(key){
   const results=evaluateBaseline(),pass=results.filter(x=>x.pass).length;
   $('eval-output').innerHTML='<div class="notice success">'+pass+'/'+results.length+' deterministic cases matched the reference categories. NOT an LLM evaluation.<br>'+results.map(x=>esc(x.label)+' → '+esc(x.received)).join('<br>')+'</div>';return
  }
- if(key==='adopt-ai'){const v=state.aiRuns.filter(x=>x.id===c.id).at(-1)?.output;if(!v?.suggested_reply){notice('No model suggestion available.');return}c.reply=v.suggested_reply;c.replyApproved=false;await change(c,'AI suggestion copied to unapproved draft','Human review and approval required before any closure.');return}
+ if(key==='adopt-ai'){const v=state.aiRuns.filter(x=>x.id===c.id).at(-1)?.output;if(!v?.suggested_reply){notice('No model suggestion available.');return}c.reply=v.suggested_reply;c.replyApproved=false;c.replyApprovedFor='';await change(c,'AI suggestion copied to unapproved draft','Human review and approval required before any closure.');return}
  if(key==='ai'){
   const draft=$('reply').value.trim();if(draft.length<30){notice('Write a response before requesting critique.');return}
   try{

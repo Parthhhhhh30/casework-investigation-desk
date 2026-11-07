@@ -30,6 +30,8 @@ export function validateEscalation(c,target,reason){
  // has not yet completed routine documentation. Preserve a short safety summary when available.
  if(c.kind==='legal' && target!=='Patent-domain specialist')e.push('Questionable patent content must go to a qualified patent-domain reviewer.');
  if(c.fault?.security && target!=='Security')e.push('Potential exposure must be routed urgently to Security.');
+ if(target==='Security' && !c.fault?.security)e.push('A security escalation requires a recorded potential confidentiality or access-boundary concern.');
+ if(target==='Engineering' && !c.diagnostics?.length)e.push('Record a diagnostic before requesting an engineering handover.');
  if(!c.fault?.security && c.kind!=='legal' && target==='Patent-domain specialist')e.push('Do not route technical access issues for legal correctness review.');
  if(c.kind==='graphql' && target==='Engineering' && !c.diagnostics.length)e.push('Include an executed diagnostic before engineering escalation.');
  if(!urgent && !reason?.trim())e.push('Explain why this route is required.');
@@ -42,16 +44,29 @@ export function canClose(c){
  if(!diagnostic(c).pass)problems.push('A passing diagnostic or verification is required.');
  if(!c.verified||!c.diagnostics.at(-1)?.pass||(c.verificationRequiredAfter&&Date.parse(c.diagnostics.at(-1).at)<Date.parse(c.verificationRequiredAfter)))problems.push('Run and record a fresh passing diagnostic after the latest change.');
  if((c.note||'').trim().length<20)problems.push('Document the investigation evidence (at least 20 characters).');
- if(!c.replyApproved || (c.reply||'').trim().length<45)problems.push('Approve a sufficiently informative customer update.');
+ if(!c.replyApproved || c.replyApprovedFor!==c.reply || !c.reply || c.approvalDiagnosticAt!==c.diagnostics.at(-1)?.at || checkResponse(c.reply,c).length)problems.push('Review and approve an evidence-consistent customer response after the latest diagnostic.');
  return {ok:problems.length===0,problems};
 }
-export function checkResponse(text){
- const issues=[];
- if(!text||text.trim().length<45)issues.push('Provide enough context to help the customer (45+ characters).');
- if(/\b(guaranteed|definitely fixed|100% secure|legally correct|approved by the patent office|will be fixed in \d+)/i.test(text||''))issues.push('Remove unsupported guarantees or legal assurances.');
- if(/\b(send (me|us) your password|share your password)\b/i.test(text||''))issues.push('Never request passwords.');
+export function checkResponse(text,c){
+ const issues=[],v=String(text||'').trim();
+ if(v.length<60)issues.push('Give the customer a substantial update (at least 60 characters).');
+ if(/\b(guarantee(?:d)?|definitely fixed|100% secure|entirely safe|completely secure|perfectly secure|permanently (?:fixed|solved)|legally (?:correct|sound|valid)|approved by (?:the )?patent office|will never (?:happen|recur)|never happen again|cannot happen again|fixed for all customers|will be fixed in \d+|resolved once and for all)\b/i.test(v))
+  issues.push('Remove guarantees or absolute statements that the investigation cannot establish.');
+ if(/\b(send (?:me|us) your password|share your password|provide your password)\b/i.test(v))
+  issues.push('Never request passwords.');
+ if(c){
+  if(!c.verified && /\b(?:I (?:have |'ve )?(?:verified|confirmed|fixed|resolved) (?:the |this )?(?:problem|issue|fault)|(?:the |this )?(?:problem|issue|fault) (?:is|has been) (?:fixed|resolved)|you can now safely|I can confirm (?:it|this) (?:is|has been) (?:fixed|resolved))\b/i.test(v))
+   issues.push('Do not claim a verified resolution before the latest passing retest.');
+  if(c.kind==='legal' && /\b(?:safe to (?:file|submit)|patent (?:is|will be) valid|legal(?:ly)? (?:accurate|approved)|you should (?:file|submit))\b/i.test(v))
+   issues.push('Do not give patent-law correctness or filing advice.');
+  const context={login:/\b(session|sign.in|login|access|account|browser)\b/i,graphql:/\b(setting|draft|save|update|request|mutation|change)\b/i,documents:/\b(document|source|revision|version|import|snapshot|permission)\b/i,legal:/\b(reference|citation|patent|legal|source|draft)\b/i};
+  if(!context[c.kind]?.test(v))issues.push('Refer to the actual customer problem rather than a generic response.');
+  if(!/\b(?:will|next|check(?:ing)?|investigat(?:e|ing)|review(?:ing)?|retest|verify|confirm|escalat(?:e|ing)|follow.up|update|resolved|tested)\b/i.test(v))
+   issues.push('Explain the next action or the checked outcome.');
+ }
  return issues;
 }
+
 export function baseline(c){
  const obs=diagnostic(c);
  const route=c.fault?.security?'Security':c.kind==='legal'?'Patent-domain specialist':c.kind==='graphql'?(c.fault?.missingId?'Engineering':'Customer support'):'Customer support';
