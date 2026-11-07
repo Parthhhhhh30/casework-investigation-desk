@@ -23,7 +23,7 @@ jobs:
           const r=await fetch(base+'/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
           const result=await r.json();
           console.log('Live Gemini HTTP status:',r.status);
-          console.log('Response metadata:',JSON.stringify({model:result.model,advisory:result.advisory,critiqueLength:result.critique?.length,suggestionLength:result.suggested_reply?.length,caveatLength:result.caveat?.length,error:result.error}));
+          console.log('Response metadata:',JSON.stringify({model:result.model,advisory:result.advisory,critiqueLength:result.critique?.length,suggestionLength:result.suggested_reply?.length,caveatLength:result.caveat?.length,error:result.error,providerStatus:result.providerStatus,providerCode:result.providerCode}));
           if(!r.ok)throw Error('Live Gemini returned HTTP '+r.status);
           if(!result.advisory||!result.critique||!result.suggested_reply||!result.caveat)throw Error('Structured critique missing');
           if(/legally correct|guaranteed|100% secure/i.test(result.suggested_reply))throw Error('Unsafe assurance in generated answer');
