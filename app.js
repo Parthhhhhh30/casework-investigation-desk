@@ -46,7 +46,9 @@ function knowledge(c){
 }
 function activity(c){
  const gate=canClose(c);
+ const last=c.diagnostics.at(-1);
  return heading('05 / AUDIT HISTORY','What actually happened?','Actions and evidence persist in your browser until you reset this isolated fictional casebook.')
+ +card('<h3>Evidence summary / current case</h3><div class="fact"><small>LAST CONTROLLED TEST</small><strong>'+esc(last?((last.pass?'PASS':'FAIL')+' · '+last.label+' · '+when(last.at)):'Not executed')+'</strong></div><div class="fact"><small>RECORDED FINDINGS</small><strong>'+esc(c.note||'No investigation evidence recorded')+'</strong></div><div class="fact"><small>CUSTOMER COMMUNICATION</small><strong>'+esc(c.replyApproved&&c.replyApprovedFor===c.reply?'Reviewed draft / not sent':'Draft not approved or superseded')+'</strong></div><div class="fact"><small>SPECIALIST HANDOVER</small><strong>'+esc(c.routing?.target||'No escalation recorded')+'</strong></div><p class="meta">This is a browser-local fictional investigation record, not a real customer audit trail.</p>')
  +card('<div class="timeline">'+c.history.map(e=>'<div class="event"><span>'+when(e.at)+'</span><b>'+esc(e.action)+'</b><p>'+esc(e.details)+'</p></div>').join('')+'</div>')
  +card('<h3>Closure gate: '+(gate.ok?'READY':'NOT READY')+'</h3>'+gate.problems.map(x=>'<p class="notice">'+esc(x)+'</p>').join('')+button('close','Attempt verified closure')+button('reopen','Reopen investigation','secondary'));
 }
