@@ -31,3 +31,15 @@ test('AI service fails closed without configured provider',async()=>{ const flag
 test('fictional GraphQL invalid variables are rejected',async()=>{const r=await invoke(graphql,'POST',{operationName:'UpdateDraftSettings',variables:[]});assert.equal(r.status,400)});
 
 test('AI service fails closed without signed-session secret',async()=>{const before=Object.fromEntries(['CASEWORK_ALLOW_MODEL_CALLS','GEMINI_API_KEY','CASEWORK_SESSION_SECRET'].map(k=>[k,process.env[k]]));Object.assign(process.env,{CASEWORK_ALLOW_MODEL_CALLS:'true',GEMINI_API_KEY:'test-placeholder-not-a-real-key',CASEWORK_SESSION_SECRET:''});try{const r=await invoke(ai,'POST',{});assert.equal(r.status,503);assert.match(r.data.error,/session security/i)}finally{for(const [k,v] of Object.entries(before)){if(v===undefined)delete process.env[k];else process.env[k]=v}}});
+
+test('previous passing evidence cannot close a changed case',()=>{
+ const c=fresh().cases[0];
+ c.fault.expired=false;
+ c.diagnostics.push({...diagnostic(c),at:'2026-11-07T00:00:00.000Z'});
+ c.verified=true;
+ c.note='Session refreshed successfully with simulated server results and trace';
+ c.replyApproved=true;
+ c.reply='I retested the simulated session and confirmed successful access to the fictional workspace';
+ c.verificationRequiredAfter='2026-11-07T00:01:00.000Z';
+ assert.equal(canClose(c).ok,false);
+});
