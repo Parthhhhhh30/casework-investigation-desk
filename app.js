@@ -133,7 +133,7 @@ async function action(key){
  if(key==='ai'){
   const draft=$('reply').value.trim();if(draft.length<30){notice('Write a response before requesting critique.');return}
   try{
-   const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:c.kind,caseId:c.id,draft,observations:c.note.slice(0,800),label:diagnostic(c).label})});
+   const access=window.prompt('Private AI demo access code (not stored):');if(!access){notice('AI request cancelled.');return;}\n   const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json','x-casework-ai-access':access},body:JSON.stringify({kind:c.kind,caseId:c.id,draft,observations:c.note.slice(0,800),label:diagnostic(c).label})});
    const v=await r.json();if(!r.ok)throw Error(v.error||'Provider unavailable');
    state.aiRuns.push({id:c.id,at:nowIso(),output:v});await change(c,'External model critique recorded',v.model+' / no automatic action performed.');
   }catch(e){notice('Live AI unavailable: '+e.message+'. No simulated text is presented as actual model output.');}return
