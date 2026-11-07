@@ -41,6 +41,6 @@ To enable the **optional real provider** in a privately controlled deployment, c
 - Browser casebooks remain local to the visitor; only fictional GraphQL settings and separate AI usage counters are persisted server-side.
 
 ## Boundaries
-This is **not** a connected vendor service, a real customer incident system, patent-law advice, or a shared authenticated ticket database. Browser casebooks are isolated and user-editable; the Neon database only stores model-use counters. Gemini supplies communication suggestions, never evidence, legal certification or autonomous case actions. All measurements and examples are demonstration results; no commercial deployment or customer outcomes are claimed.
+This is **not** a connected vendor service, a real customer incident system, patent-law advice, or a shared authenticated ticket database. Browser casebooks are isolated and user-editable; Neon stores only fictional GraphQL settings and hashed model-use counters, not customer messages or case history. Gemini supplies communication suggestions, never evidence, legal certification or autonomous case actions. All measurements and examples are demonstration results; no commercial deployment or customer outcomes are claimed.
 
 Developed with AI-assisted implementation, reviewed through executable regression tests and live-provider acceptance checks.
