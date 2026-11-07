@@ -7,6 +7,7 @@ on:
       - 'rules.mjs'
       - 'api/graphql.js'
       - 'ai-evaluation.mjs'
+      - 'browser-smoke.mjs'
       - '.github/workflows/production-browser.yml'
 jobs:
   verify-production:
