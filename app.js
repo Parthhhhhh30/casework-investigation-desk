@@ -28,7 +28,7 @@ function response(c){
  return heading('02 / COMMUNICATION','Write a precise customer update.','The operator owns the response. AI critique is optional, limited and never sends the message.')
  +card('<p><b>Incoming:</b> '+esc(c.customer)+'</p>'+field('reply','Customer-facing draft',c.reply||examples[c.kind])+button('approve','Check and approve draft')+button('ai','Request live AI critique','secondary')+'<p class="meta">UNSENT · NEVER FORWARDED TO A REAL CUSTOMER</p>')
  +(c.replyApproved?card('<h3>Locally approved</h3><p>The draft is in the case history. No outbound message was transmitted.</p>'):'')
- +(state.aiRuns.filter(x=>x.id===c.id).length?card('<h3>Model critique (untrusted suggestion)</h3><p>'+esc(JSON.stringify(state.aiRuns.filter(x=>x.id===c.id).at(-1).output))+'</p>'):'');
+ +(state.aiRuns.filter(x=>x.id===c.id).length?(()=>{const v=state.aiRuns.filter(x=>x.id===c.id).at(-1).output;return card('<h3>Live model review <small>/ '+esc(v.model)+'</small></h3><p class="meta">UNTRUSTED ADVICE · HUMAN APPROVAL REQUIRED</p><h4>Recommended improvement</h4><p>'+esc(v.critique)+'</p><h4>Suggested customer reply — not sent</h4><p>'+esc(v.suggested_reply)+'</p><h4>Evidence and uncertainty</h4><p>'+esc(v.caveat)+'</p>'+button('adopt-ai','Use as editable draft','secondary'));})():'');
 }
 function escalate(c){
  let recommended=c.fault.security?'Security':c.kind==='legal'?'Patent-domain specialist':c.kind==='graphql'?'Engineering':'Customer support';
@@ -130,6 +130,7 @@ async function action(key){
   const results=evaluateBaseline(),pass=results.filter(x=>x.pass).length;
   $('eval-output').innerHTML='<div class="notice success">'+pass+'/'+results.length+' deterministic cases matched the reference categories. NOT an LLM evaluation.<br>'+results.map(x=>esc(x.label)+' → '+esc(x.received)).join('<br>')+'</div>';return
  }
+ if(key==='adopt-ai'){const v=state.aiRuns.filter(x=>x.id===c.id).at(-1)?.output;if(!v?.suggested_reply){notice('No model suggestion available.');return}c.reply=v.suggested_reply;c.replyApproved=false;await change(c,'AI suggestion copied to unapproved draft','Human review and approval required before any closure.');return}
  if(key==='ai'){
   const draft=$('reply').value.trim();if(draft.length<30){notice('Write a response before requesting critique.');return}
   try{
