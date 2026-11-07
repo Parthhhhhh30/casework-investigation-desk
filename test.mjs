@@ -23,3 +23,6 @@ test('document security indicator cannot be reported passing',async()=>{const r=
 test('GraphQL application error remains visible with HTTP 200',async()=>{const r=await invoke(graphql,'POST',{operationName:'UpdateDraftSettings',variables:{settings:{review:true}}});assert.equal(r.status,200);assert.ok(r.data.errors.length)});
 test('GraphQL valid mutation succeeds in fictional service',async()=>{const r=await invoke(graphql,'POST',{operationName:'UpdateDraftSettings',variables:{draftId:'demo_42',settings:{review:true}}});assert.equal(r.data.data.updateDraftSettings.success,true)});
 test('model endpoint fails closed without configured access',async()=>{const r=await invoke(ai,'POST',{caseId:'CW-101',kind:'login',draft:'A sufficiently long sample message for the test'});assert.ok([403,503].includes(r.status));assert.equal('output' in r.data,false)});
+
+test('GraphQL rejects malformed JSON without throwing',async()=>{const r=await invoke(graphql,'POST','{invalid');assert.equal(r.status,400);assert.ok(r.data.errors)});
+test('GraphQL rejects oversized requests',async()=>{const r=await invoke(graphql,'POST',{operationName:'UpdateDraftSettings',variables:{padding:'x'.repeat(5000)}});assert.equal(r.status,413)});
