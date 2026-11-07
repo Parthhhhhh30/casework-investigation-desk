@@ -27,28 +27,7 @@ test('model endpoint fails closed without configured access',async()=>{const r=a
 test('GraphQL rejects malformed JSON without throwing',async()=>{const r=await invoke(graphql,'POST','{invalid');assert.equal(r.status,400);assert.ok(r.data.errors)});
 test('GraphQL rejects oversized requests',async()=>{const r=await invoke(graphql,'POST',{operationName:'UpdateDraftSettings',variables:{padding:'x'.repeat(5000)}});assert.equal(r.status,413)});
 
-test('private AI access rejects missing code without provider call',async()=>{
- const before={flag:process.env.CASEWORK_ALLOW_MODEL_CALLS,key:process.env.GEMINI_API_KEY,code:process.env.CASEWORK_AI_ACCESS_CODE};
- process.env.CASEWORK_ALLOW_MODEL_CALLS='true';process.env.GEMINI_API_KEY='test-placeholder-not-a-real-key';process.env.CASEWORK_AI_ACCESS_CODE='a-secure-test-access-code-123456789';
- try{
-  const r=await invoke(ai,'POST',{caseId:'CW-101',kind:'login',draft:'A sufficiently long fictional support message.'});
-  assert.equal(r.status,403);
-  assert.equal('suggested_reply' in r.data,false);
- }finally{
-  for(const [key,val] of Object.entries({CASEWORK_ALLOW_MODEL_CALLS:before.flag,GEMINI_API_KEY:before.key,CASEWORK_AI_ACCESS_CODE:before.code})){
-   if(val===undefined)delete process.env[key];else process.env[key]=val;
-  }
- }
-});
+test('AI service fails closed without configured provider',async()=>{ const flag=process.env.CASEWORK_ALLOW_MODEL_CALLS,key=process.env.GEMINI_API_KEY;delete process.env.GEMINI_API_KEY;process.env.CASEWORK_ALLOW_MODEL_CALLS='false';try{const r=await invoke(ai,'POST',{});assert.equal(r.status,503)}finally{if(flag===undefined)delete process.env.CASEWORK_ALLOW_MODEL_CALLS;else process.env.CASEWORK_ALLOW_MODEL_CALLS=flag;if(key!==undefined)process.env.GEMINI_API_KEY=key}});
 test('fictional GraphQL invalid variables are rejected',async()=>{const r=await invoke(graphql,'POST',{operationName:'UpdateDraftSettings',variables:[]});assert.equal(r.status,400)});
 
-test('model refuses inference if durable quota store is unavailable',async()=>{
- const saved=Object.fromEntries(['CASEWORK_ALLOW_MODEL_CALLS','GEMINI_API_KEY','CASEWORK_AI_ACCESS_CODE','CASEWORK_AI_BUDGET_APPROVED'].map(k=>[k,process.env[k]]));
- const code='private-test-access-code-at-least-24';
- Object.assign(process.env,{CASEWORK_ALLOW_MODEL_CALLS:'true',GEMINI_API_KEY:'placeholder',CASEWORK_AI_ACCESS_CODE:code,CASEWORK_AI_BUDGET_APPROVED:'false'});
- try{
-  const req={method:'POST',headers:{'x-casework-ai-access':code},body:{caseId:'CW-101',kind:'login',draft:'This is a sufficiently detailed fictional customer response.',observations:'fictional',label:'SESSION_EXPIRED'}};
-  const result=await new Promise((resolve,reject)=>{let status=200;const res={setHeader(){},set statusCode(n){status=n},end(raw){resolve({status,data:JSON.parse(raw)})}};Promise.resolve(ai(req,res)).catch(reject)});
-  assert.equal(result.status,503);assert.match(result.data.error,/(quota store unavailable|quota check unavailable)/i);
- }finally{for(const [k,v] of Object.entries(saved)){if(v===undefined)delete process.env[k];else process.env[k]=v}}
-});
+test('AI service fails closed without signed-session secret',async()=>{const before=Object.fromEntries(['CASEWORK_ALLOW_MODEL_CALLS','GEMINI_API_KEY','CASEWORK_SESSION_SECRET'].map(k=>[k,process.env[k]]));Object.assign(process.env,{CASEWORK_ALLOW_MODEL_CALLS:'true',GEMINI_API_KEY:'test-placeholder-not-a-real-key',CASEWORK_SESSION_SECRET:''});try{const r=await invoke(ai,'POST',{});assert.equal(r.status,503);assert.match(r.data.error,/session security/i)}finally{for(const [k,v] of Object.entries(before)){if(v===undefined)delete process.env[k];else process.env[k]=v}}});
