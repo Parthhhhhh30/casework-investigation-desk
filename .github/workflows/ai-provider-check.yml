@@ -1,4 +1,4 @@
-name: CASEWORK live provider acceptance
+name: CASEWORK live provider acceptance (Gemini 3.5)
 on:
   push:
     paths:
