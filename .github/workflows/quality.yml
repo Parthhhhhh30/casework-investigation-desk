@@ -15,3 +15,7 @@ jobs:
       - run: node --check api/graphql.js
       - run: node --check api/lab.js
       - run: npm test
+      - run: npm install --no-save playwright@1.58.2
+      - run: npx playwright install --with-deps chromium
+      - run: node dev-server.mjs > /tmp/casework-server.log 2>&1 &
+      - run: node browser-smoke.mjs
