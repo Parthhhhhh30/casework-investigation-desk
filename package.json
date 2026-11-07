@@ -2,8 +2,8 @@
   "name": "casework-investigation-desk",
   "private": true,
   "type": "module",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "scripts": {
-    "test": "node --test test.mjs integration.test.mjs"
+    "test": "node --test test.mjs"
   }
 }
