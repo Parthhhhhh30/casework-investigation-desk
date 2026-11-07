@@ -40,7 +40,7 @@ export function canClose(c){
  if(c.kind==='legal')problems.push('A support specialist cannot certify patent/legal correctness. Specialist review is required.');
  if(c.fault?.security)problems.push('Possible confidentiality incident requires security ownership before routine closure.');
  if(!diagnostic(c).pass)problems.push('A passing diagnostic or verification is required.');
- if(!c.verified)problems.push('Run and record a successful verification.');
+ if(!c.verified||!c.diagnostics.at(-1)?.pass||(c.verificationRequiredAfter&&Date.parse(c.diagnostics.at(-1).at)<Date.parse(c.verificationRequiredAfter)))problems.push('Run and record a fresh passing diagnostic after the latest change.');
  if((c.note||'').trim().length<20)problems.push('Document the investigation evidence (at least 20 characters).');
  if(!c.replyApproved || (c.reply||'').trim().length<45)problems.push('Approve a sufficiently informative customer update.');
  return {ok:problems.length===0,problems};
