@@ -54,7 +54,7 @@ export default async function handler(req,res){
    headers:{'Content-Type':'application/json','x-goog-api-key':process.env.GEMINI_API_KEY},
    body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{temperature:0,maxOutputTokens:650,responseMimeType:'application/json'}})
   });
-  if(!upstream.ok)return reply(res,502,{error:'Model provider unavailable'});
+  if(!upstream.ok){let providerCode='UNKNOWN';try{const e=await upstream.json();const code=String(e?.error?.status||'');if(/^[A-Z_]{3,45}$/.test(code))providerCode=code;}catch{}return reply(res,502,{error:'Model provider request rejected',providerStatus:upstream.status,providerCode});}
   const data=await upstream.json(),str=data.candidates?.[0]?.content?.parts?.map(x=>x.text||'').join('')||'';
   let parsed;try{parsed=JSON.parse(str)}catch{return reply(res,502,{error:'Model response failed JSON validation'})}
   if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))return reply(res,502,{error:'Invalid model output'});
