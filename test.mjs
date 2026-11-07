@@ -41,3 +41,14 @@ test('private AI access rejects missing code without provider call',async()=>{
  }
 });
 test('fictional GraphQL invalid variables are rejected',async()=>{const r=await invoke(graphql,'POST',{operationName:'UpdateDraftSettings',variables:[]});assert.equal(r.status,400)});
+
+test('model budget gate refuses inference even with private access',async()=>{
+ const saved=Object.fromEntries(['CASEWORK_ALLOW_MODEL_CALLS','GEMINI_API_KEY','CASEWORK_AI_ACCESS_CODE','CASEWORK_AI_BUDGET_APPROVED'].map(k=>[k,process.env[k]]));
+ const code='private-test-access-code-at-least-24';
+ Object.assign(process.env,{CASEWORK_ALLOW_MODEL_CALLS:'true',GEMINI_API_KEY:'placeholder',CASEWORK_AI_ACCESS_CODE:code,CASEWORK_AI_BUDGET_APPROVED:'false'});
+ try{
+  const req={method:'POST',headers:{'x-casework-ai-access':code},body:{caseId:'CW-101',kind:'login',draft:'This is a sufficiently detailed fictional customer response.',observations:'fictional',label:'SESSION_EXPIRED'}};
+  const result=await new Promise((resolve,reject)=>{let status=200;const res={setHeader(){},set statusCode(n){status=n},end(raw){resolve({status,data:JSON.parse(raw)})}};Promise.resolve(ai(req,res)).catch(reject)});
+  assert.equal(result.status,503);assert.match(result.data.error,/budget/i);
+ }finally{for(const [k,v] of Object.entries(saved)){if(v===undefined)delete process.env[k];else process.env[k]=v}}
+});
