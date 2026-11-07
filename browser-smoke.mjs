@@ -12,7 +12,7 @@ try{
   await page.locator('#case-title').waitFor({state:'visible'});
   assert.equal(await page.locator('#rail-id').innerText(),id);
   await page.locator('[data-action="diagnose"]').first().click();
-  await page.waitForTimeout(500);
+  await page.locator('#tab-panel .evidence-block').first().waitFor({state:'visible',timeout:15000});
   const txt=await page.locator('#tab-panel').innerText();
   assert.match(txt,/SESSION_EXPIRED|GRAPHQL_VALIDATION_ERROR|STALE_SNAPSHOT|UNVERIFIED_REFERENCE/,'diagnostic evidence appears');
  }
