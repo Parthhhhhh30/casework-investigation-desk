@@ -1,7 +1,7 @@
 # CASEWORK
 **From reported fault to verified resolution — an interactive technical support investigation desk.**
 
-**[Live demo](https://casework-investigation-desk-parthhhh.vercel.app/)** · [GitHub-backed preview](https://casework-investigation-desk-9nllwwv1k-parthhhh.vercel.app/)**
+**[Live demo](https://casework-investigation-desk-parthhhh.vercel.app/) · [GitHub-backed preview](https://casework-investigation-desk-9nllwwv1k-parthhhh.vercel.app/)**
 
 CASEWORK is an independent portfolio exercise using four fictional support cases: login/access, silent failures, document integration and permissions, and questionable AI-generated patent material. Every organisation, case and investigation record is synthetic.
 
@@ -12,7 +12,7 @@ CASEWORK is an independent portfolio exercise using four fictional support cases
 4. Review escalation requirements, customer communications, investigation history and knowledge records.
 
 ## Architecture
-Original responsive HTML/CSS/JavaScript UI; deterministic JavaScript case rules; simulated GraphQL and diagnostic serverless endpoints; IndexedDB local persistence. Optional Gemini communication critique is **disabled** until public endpoint authentication and usage limits are implemented.
+Original responsive HTML/CSS/JavaScript UI; deterministic JavaScript case rules; simulated GraphQL and diagnostic serverless endpoints; IndexedDB local persistence. Optional Gemini communication critique is protected by a private access-code gate and remains disabled in production until model access and durable usage controls are validated.
 
 ## Local setup
 Requires Node.js 20+. Run `npm test` for the deterministic logic and API contract tests. The static site and its serverless endpoints must be served together for full functionality.
