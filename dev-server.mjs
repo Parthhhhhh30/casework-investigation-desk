@@ -11,7 +11,7 @@ http.createServer(async(req,res)=>{
  res.status=function(n){res.statusCode=n;return res};res.json=function(o){res.setHeader('Content-Type','application/json');res.end(JSON.stringify(o));return res};
  return await route({...req,body},res)}
  const p=u.pathname==='/'?'index.html':u.pathname.substring(1);
- if(!['index.html','app.js','rules.mjs','styles.css'].includes(p)){res.writeHead(404);return res.end('Not found')}
+ if(!['index.html','app.js','rules.mjs','ai-evaluation.mjs','styles.css'].includes(p)){res.writeHead(404);return res.end('Not found')}
  const data=await fs.readFile(path.join(root,p));res.setHeader('Content-Type',types[path.extname(p)]||'text/plain');res.end(data)
  }catch(e){res.writeHead(500);res.end('Internal error')}
 }).listen(port,'127.0.0.1',()=>console.log('CASEWORK test server on '+port));
