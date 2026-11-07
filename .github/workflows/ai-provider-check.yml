@@ -1,8 +1,6 @@
 name: CASEWORK live provider acceptance (Gemini 3.5)
 on:
-  push:
-    paths:
-      - .github/workflows/ai-provider-check.yml
+  workflow_dispatch:
 jobs:
   real-gemini:
     runs-on: ubuntu-latest
