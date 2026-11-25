@@ -1,46 +1,44 @@
 # CASEWORK
-**A working technical-support investigation desk: reproduce → diagnose → resolve or escalate → verify → document.**
 
-**[Live application](https://casework-investigation-desk-parthhhh.vercel.app/)** · [Automated tests](https://github.com/Parthhhhhh30/casework-investigation-desk/actions)
+A technical-support investigation desk for reproducing a problem, inspecting evidence and verifying a resolution before closing the case.
 
-CASEWORK is an independent interactive portfolio case study built around **four fictional support incidents**: an expired login session, a GraphQL mutation returning HTTP 200 but failing application validation, a stale document-import snapshot, and an unverified AI-generated patent citation. All organisations, communications, records and diagnostic environments are synthetic.
+[Live application](https://casework-investigation-desk-parthhhh.vercel.app/) · [Automated checks](https://github.com/Parthhhhhh30/casework-investigation-desk/actions)
 
-## What you can actually do
-1. Open any incident and run a real HTTP request to a **controlled fictional server**; inspect returned errors and evidence.
-2. Record findings, change a simulated configuration, rerun diagnostics and verify a fresh passing result.
-3. Prepare a customer response, approve it locally, and close only when evidence and verification gates pass.
-4. Escalate suspected confidentiality issues to Security and questionable patent reasoning to a qualified specialist; neither can be casually marked resolved.
-5. Record an audit trail and publish a locally approved knowledge article after a verified technical resolution.
-6. Request **real Gemini 3.5 Flash-Lite** feedback on a fictional response, review a proposed improvement and explicitly choose whether to copy it into an **unapproved** draft. No automated customer message or closure occurs.
+Support work can go wrong when a plausible explanation becomes a customer assurance before anyone has checked it. CASEWORK makes that boundary visible: a response needs local approval, a repair needs fresh evidence, and specialist questions remain escalated.
 
-## How it works
-- **Client:** HTML, CSS and vanilla JavaScript; responsive investigation workspace; browser-local IndexedDB casebook.
-- **Deterministic backend:** Vercel functions under `/api/graphql` and `/api/lab`, with reproducible HTTP responses and scenario-specific faults. No LLM determines incident status, evidence or closure.
-- **Optional AI review:** `/api/ai` calls Google's Gemini API server-side, validates a constrained structured response and refuses unsupported assurances.
-- **Abuse controls:** signed HttpOnly browser-session cookies and atomic Neon PostgreSQL quota reservations (up to **3 requests per session per UTC day**, **12 total per UTC day**). Requests consume quota before upstream calls; limits apply across deployments sharing the database. No Google credential or database URL is sent to the browser.
+## Explore an investigation
 
-## Run and test
-Node.js 22+ recommended. The default local mode runs the deterministic server and browser, with external AI disabled.
+Four fictional incidents cover an expired login session, a GraphQL mutation that returns HTTP 200 but fails validation, a stale document-import snapshot and an unverified AI-generated patent citation.
 
-```bash
+1. Run a real HTTP request against the controlled fictional server and inspect its response.
+2. Record findings, change a simulated configuration and rerun the diagnostic.
+3. Prepare and approve a customer response. Closure requires passing evidence and verification gates.
+4. Escalate suspected confidentiality issues to Security and patent reasoning to a qualified specialist.
+5. After a verified technical resolution, approve a knowledge article locally and inspect the audit trail.
+
+Optional Gemini feedback can suggest improvements to a fictional response. You decide whether to copy a suggestion into an **unapproved** draft. It cannot send a message, determine incident status or close a case.
+
+## Run locally
+
+Node.js 22+ is recommended. External AI is disabled in the default local mode.
+
+```sh
 npm install
 npm run serve
-# open http://127.0.0.1:4173
+# Open http://127.0.0.1:4173
 npm test
 ```
 
-GitHub Actions runs JavaScript syntax checks, deterministic/API tests and real Chromium end-to-end exercises, including a GraphQL repair/verification/closure path, illegal closure refusal, response suggestion handling and mobile use.
+The interface uses HTML, CSS and JavaScript, with browser-local IndexedDB casebooks. Vercel functions provide deterministic lab and GraphQL responses. Hosted GraphQL settings and optional AI quotas use Neon PostgreSQL; the Google API key stays server-side.
 
-To enable the **optional real provider** in a privately controlled deployment, create a separate PostgreSQL database, apply `schema.sql`, and configure the server-only values described in `.env.example`. Set `CASEWORK_ALLOW_MODEL_CALLS=true` only with the database, a strong `CASEWORK_SESSION_SECRET`, and a valid `GEMINI_API_KEY`. The live-provider acceptance workflow can be triggered separately and uses fictional text only.
+GitHub Actions runs syntax checks, deterministic/API tests and Chromium journeys, including repair, closure refusal, response suggestions and mobile use. Optional provider setup, storage behaviour and manual workflow boundaries are in [operations and verification](docs/OPERATIONS.md).
 
-## Current release: evidence and limitations
-- Customer-response approval now checks the fictional case context, rejects a wider set of unverified assurances, and is invalidated when the diagnostic evidence changes. This is a guardrail, **not** a guarantee of correct support writing.
-- A routine account-access issue cannot be routed to Security without a recorded security indicator; legal and suspected exposure cases retain specialist routing.
-- The GraphQL investigation now writes to an isolated fictional database record and independently reads back the saved revision before reporting a passing result. The live deployment requires the `demo_draft_settings` table in its configured database; if unavailable, the diagnostic fails rather than claiming success. Production uses server-side signed sessions; local development uses an isolated in-process test store.
-- The knowledge panel can screen **recorded real model responses** against case-specific safety rules. Results explicitly distinguish this from the eight deterministic routing cases. These heuristic checks do not establish the model's overall reliability, and no live AI calls are made by the audit.
-- Browser casebooks remain local to the visitor; only fictional GraphQL settings and separate AI usage counters are persisted server-side.
+## Evidence and limitations
 
-## Boundaries
-This is **not** a connected vendor service, a real customer incident system, patent-law advice, or a shared authenticated ticket database. Browser casebooks are isolated and user-editable; Neon stores only fictional GraphQL settings and hashed model-use counters, not customer messages or case history. Gemini supplies communication suggestions, never evidence, legal certification or autonomous case actions. All measurements and examples are demonstration results; no commercial deployment or customer outcomes are claimed.
+All organisations, communications, records and diagnostic environments are synthetic. This is an independent prototype, not a connected vendor service, real customer incident system or patent-law advice. No commercial customer outcomes are claimed.
 
-Developed with AI-assisted implementation, reviewed through executable regression tests and live-provider acceptance checks.
+Response approval checks are guardrails, not a guarantee of accurate support writing. Recorded model responses can be screened against case-specific rules; those results do not establish general model reliability.
+
+Browser casebooks are isolated and user-editable, rather than a shared authenticated ticket database. Server storage contains fictional settings and hashed model-use counters, not customer messages or case history. Optional model requests are quota-limited and require server configuration.
+
+Developed with AI-assisted implementation and reviewed through executable regression tests and separately recorded provider acceptance checks.
